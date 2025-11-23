@@ -55,6 +55,7 @@ public class AlgorithmSetting implements Cloneable {
     private final boolean stonkDown;
     private final boolean stonkTeleport;
     private final boolean stonkEChest;
+    private final boolean dungeonBreaker;
 
     private final boolean routeEtherwarp;
 
@@ -89,13 +90,14 @@ public class AlgorithmSetting implements Cloneable {
         this.etherwarpOffset = nbt.getDouble("etherwarpOffset");
         this.etherwarpRadius = nbt.getInteger("etherwarpRadius");
         this.etherwarpLeeway = nbt.getDouble("etherwarpLeeway");
+        this.dungeonBreaker = nbt.getBoolean("dungeonBreaker");
 
         this.pickaxeSpeed = pickaxe == null ? -1 : pickaxe.getSpeed(hasteLevel);
         this.shovelSpeed = shovel == null ? -1 : shovel.getSpeed(hasteLevel) / 30.0;
         this.axeSpeed = axe == null ? -1 : axe.getSpeed(hasteLevel) / 30.0;
     }
 
-    public AlgorithmSetting(ToolSettings pickaxe, ToolSettings shovel, ToolSettings axe, int hasteLevel, boolean stonkDown, boolean stonkTeleport, boolean stonkEChest, boolean routeEtherwarp, int maxStonk, boolean enderpearl, boolean tntpearl, double etherwarpOffset, int etherwarpRadius, double etherwarpLeeway, boolean slowStonk) {
+    public AlgorithmSetting(ToolSettings pickaxe, ToolSettings shovel, ToolSettings axe, int hasteLevel, boolean stonkDown, boolean stonkTeleport, boolean stonkEChest, boolean routeEtherwarp, int maxStonk, boolean enderpearl, boolean tntpearl, double etherwarpOffset, int etherwarpRadius, double etherwarpLeeway, boolean slowStonk, boolean dungeonBreaker) {
         this.pickaxe = pickaxe;
         this.shovel = shovel;
         this.axe = axe;
@@ -110,6 +112,7 @@ public class AlgorithmSetting implements Cloneable {
         this.etherwarpOffset = etherwarpOffset;
         this.etherwarpRadius = etherwarpRadius;
         this.etherwarpLeeway = etherwarpLeeway;
+        this.dungeonBreaker = dungeonBreaker;
 
         this.pickaxeSpeed = pickaxe == null ? -1 : pickaxe.getSpeed(hasteLevel);
         this.shovelSpeed = shovel == null ? -1 : shovel.getSpeed(hasteLevel) / 30.0;
@@ -139,6 +142,7 @@ public class AlgorithmSetting implements Cloneable {
         nbt.setDouble("etherwarpOffset", etherwarpOffset);
         nbt.setInteger("etherwarpRadius", etherwarpRadius);
         nbt.setDouble("etherwarpLeeway", etherwarpLeeway);
+        nbt.setBoolean("dungeonBreaker", dungeonBreaker);
         return nbt;
     }
 

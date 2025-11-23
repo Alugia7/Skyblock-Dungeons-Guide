@@ -216,7 +216,8 @@ public class WidgetCreateAbilitySettings extends AnnotatedImportOnlyWidget {
                 etherwarpOffset.getValue(),
                 maxEtherwarp.getValue(),
                 etherwarpLeeway.getValue(),
-                slowstonk.getValue()
+                slowstonk.getValue(),
+                true
         );
         PopupMgr.getPopupMgr(getDomElement()).closePopup(algorithmSetting);
     }
