@@ -120,7 +120,8 @@ public class CollisionStateCalculatingCoordinateMap implements ICoordinateMap<Co
                             } else {
                                 notstonkable+= breakFactor;
                             }
-                            if (state.getBlock() == Blocks.bedrock || state.getBlock() ==Blocks.hopper) {
+                            //Traps and hoppers are unbreakable by DB
+                            if (state.getBlock() == Blocks.bedrock || state.getBlock() ==Blocks.hopper || state.getBlock() ==Blocks.dispenser || state.getBlock() ==Blocks.piston) {
                                 notstonkable = 99;
                             }
                         }
