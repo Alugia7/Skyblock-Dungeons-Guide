@@ -112,17 +112,27 @@ public class CollisionStateCalculatingCoordinateMap implements ICoordinateMap<Co
                             continue label;
                         }
 
-                        int breakFactor = instaBreakCalc.getBlock(k1, i2, l1).getFactor();
+                        int breakFactor = 0; //instaBreakCalc.getBlock(k1, i2, l1).getFactor();
                         if (breakFactor > 0) {
-                            if (i2 == maxY - 1 && (state.getBlock() != Blocks.iron_bars && !(state.getBlock() instanceof BlockFence)) && !(state.getBlock() instanceof BlockSkull)) {
+                            Block blockToCheck = state.getBlock();
+                            if (i2 == maxY - 1 && (blockToCheck != Blocks.iron_bars && !(blockToCheck instanceof BlockFence)) && !(blockToCheck instanceof BlockSkull)) {
                                 // head level no break
                                 notstonkable = 99;
                             } else {
                                 notstonkable+= breakFactor;
                             }
-                            //Traps and hoppers are unbreakable by DB
-                            if (state.getBlock() == Blocks.bedrock || state.getBlock() ==Blocks.hopper || state.getBlock() ==Blocks.dispenser || state.getBlock() ==Blocks.piston) {
+                            //Traps, hoppers, and skulls are unbreakable by DB
+                            if (blockToCheck == Blocks.bedrock || blockToCheck == Blocks.hopper || blockToCheck == Blocks.dispenser || blockToCheck == Blocks.piston
+                                || blockToCheck instanceof BlockSkull
+                            ) {
                                 notstonkable = 99;
+                            } else {
+                                //Crypts and blocks supporting torches are also unbreakable.
+                                //Cracked walls are not but pathfiner will behave because you can superboom it
+                                IBlockState stateAbove = map.getBlock(k1, i2 + 1, l1);
+                                if (stateAbove.getBlock() == Blocks.torch || poses.contains(blockPos.up())) {
+                                    notstonkable = 99;
+                                }
                             }
                         }
 
@@ -215,7 +225,7 @@ public class CollisionStateCalculatingCoordinateMap implements ICoordinateMap<Co
 
 
             // from here, blocked = true.
-            notstonkable = 0; //test
+            //notstonkable = 0; //test
             if (notstonkable > 2) {
                 if (!isOnGround) {
                     return CollisionStateCalculatingCoordinateMap.CollisionState.BLOCKED;
