@@ -54,6 +54,7 @@ public class CollisionStateCalculatingCoordinateMap implements ICoordinateMap<Co
     private static final float playerWidth = 0.25f;
     @Override
     public CollisionState getBlock(int x, int y, int z) {
+        //out of room
         if (!roomBounds.canAccessRelative( (x - minX + 2) / 2, (z - minZ + 2) / 2)) return CollisionStateCalculatingCoordinateMap.CollisionState.BLOCKED;
         // TODO: use isInScope to determine.
 
@@ -119,7 +120,7 @@ public class CollisionStateCalculatingCoordinateMap implements ICoordinateMap<Co
                             } else {
                                 notstonkable+= breakFactor;
                             }
-                            if (state.getBlock() == Blocks.bedrock) {
+                            if (state.getBlock() == Blocks.bedrock || state.getBlock() ==Blocks.hopper) {
                                 notstonkable = 99;
                             }
                         }
@@ -213,6 +214,7 @@ public class CollisionStateCalculatingCoordinateMap implements ICoordinateMap<Co
 
 
             // from here, blocked = true.
+            notstonkable = 0; //test
             if (notstonkable > 2) {
                 if (!isOnGround) {
                     return CollisionStateCalculatingCoordinateMap.CollisionState.BLOCKED;

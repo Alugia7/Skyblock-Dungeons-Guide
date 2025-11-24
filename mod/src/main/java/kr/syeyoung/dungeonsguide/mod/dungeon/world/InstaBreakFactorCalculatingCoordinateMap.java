@@ -37,9 +37,6 @@ public class InstaBreakFactorCalculatingCoordinateMap implements ICoordinateMap<
         pos.set(x, y, z);
         Block b = iBlockState.getBlock();
         if (b == Blocks.air) return BreakFactor.INSTABREAK;
-        if (algorithmSetting.isDungeonBreaker() == true ){
-            if (b == Blocks.hopper) return BreakFactor.NO;  //dungeonbreaker cannot break hopper
-        }
         if (b.getBlockHardness(world, pos) < 0) {
             return BreakFactor.NO;
         } else if (algorithmSetting.getPickaxeSpeed() > 0 &&
@@ -51,7 +48,10 @@ public class InstaBreakFactorCalculatingCoordinateMap implements ICoordinateMap<
                 && b.isToolEffective("shovel", iBlockState)
                 && b.getBlockHardness(world, pos) <= algorithmSetting.getShovelSpeed()) {
         } else if (algorithmSetting.getAxeSpeed() > 0 && b.isToolEffective("axe", iBlockState) && b.getBlockHardness(world, pos) <= algorithmSetting.getAxeSpeed()) {
-        } else {
+        } else if (b == Blocks.wool) {
+
+        } 
+        else {
             if (!algorithmSetting.isAllowSlowStonkPath())
                 return BreakFactor.NO;
             return BreakFactor.MAYBE_HARD;
