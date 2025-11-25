@@ -1,8 +1,6 @@
 package kr.syeyoung.dungeonsguide.mod.pathfinding.abilitysetting;
 
 import lombok.*;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemTool;
 import net.minecraft.nbt.*;
 
 import java.io.DataInputStream;
@@ -13,45 +11,7 @@ import java.io.IOException;
 @With
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class AlgorithmSetting implements Cloneable {
-    @Data @AllArgsConstructor
-    public static class ToolSettings {
-        private final ItemTool tool;
-        private final int efficiency;
-
-        public NBTTagCompound serialize() {
-            NBTTagCompound tag = new NBTTagCompound();
-            tag.setString("level", tool.getRegistryName());
-            tag.setInteger("efficiency", efficiency);
-            return tag;
-        }
-
-        public static ToolSettings deserialize(NBTBase base) {
-            if (base instanceof NBTTagByte) return null;
-            else if (base instanceof NBTTagCompound) {
-                return new ToolSettings(
-                        (ItemTool) Item.getByNameOrId(((NBTTagCompound) base).getString("level")),
-                        ((NBTTagCompound) base).getInteger("efficiency"));
-            }
-            throw new IllegalArgumentException("Invalid tool settings: "+base);
-        }
-
-        public double getSpeed(int haste) {
-            int val2 = efficiency;
-            Item.ToolMaterial toolMaterial = tool.getToolMaterial();
-            double efficiency2 = toolMaterial.getEfficiencyOnProperMaterial();
-            efficiency2 += val2 * val2 + 1;
-            efficiency2 *= haste * 0.2 + 1;
-            return efficiency2;
-        }
-    }
-
-    private final ToolSettings pickaxe;
-    private final ToolSettings shovel;
-    private final ToolSettings axe;
-    private final boolean allowSlowStonkPath;
-
-    private final int hasteLevel;
-
+    
     private final boolean stonkDown;
     private final boolean stonkTeleport;
     private final boolean stonkEChest;
@@ -68,21 +28,13 @@ public class AlgorithmSetting implements Cloneable {
     private final double etherwarpLeeway;
 
 
-    private final double pickaxeSpeed;
-    private final double shovelSpeed;
-    private final double axeSpeed;
-
     public AlgorithmSetting(NBTTagCompound nbt) {
         if (nbt.getInteger("version") != 2) throw new IllegalArgumentException("Unexpected Algo Settings version: "+nbt.getInteger("version")+" / Expected: 2");
-        this.pickaxe = ToolSettings.deserialize(nbt.getTag("pickaxe"));
-        this.shovel = ToolSettings.deserialize(nbt.getTag("shovel"));
-        this.axe = ToolSettings.deserialize(nbt.getTag("axe"));
 
-        this.hasteLevel = nbt.getInteger("haste");
+
         this.stonkDown = nbt.getBoolean("stonkDown");
         this.stonkTeleport = nbt.getBoolean("stonkTeleport");
         this.stonkEChest = nbt.getBoolean("stonkEChest");
-        this.allowSlowStonkPath = nbt.hasKey("slowStonk") ? nbt.getBoolean("slowStonk") : true;
         this.routeEtherwarp = nbt.getBoolean("routeEtherwarp");
         this.maxStonk = nbt.getInteger("maxStonk");
         this.enderpearl = nbt.getBoolean("enderpearl");
@@ -91,17 +43,9 @@ public class AlgorithmSetting implements Cloneable {
         this.etherwarpRadius = nbt.getInteger("etherwarpRadius");
         this.etherwarpLeeway = nbt.getDouble("etherwarpLeeway");
         this.dungeonBreaker = nbt.getBoolean("dungeonBreaker");
-
-        this.pickaxeSpeed = pickaxe == null ? -1 : pickaxe.getSpeed(hasteLevel);
-        this.shovelSpeed = shovel == null ? -1 : shovel.getSpeed(hasteLevel) / 30.0;
-        this.axeSpeed = axe == null ? -1 : axe.getSpeed(hasteLevel) / 30.0;
     }
 
-    public AlgorithmSetting(ToolSettings pickaxe, ToolSettings shovel, ToolSettings axe, int hasteLevel, boolean stonkDown, boolean stonkTeleport, boolean stonkEChest, boolean routeEtherwarp, int maxStonk, boolean enderpearl, boolean tntpearl, double etherwarpOffset, int etherwarpRadius, double etherwarpLeeway, boolean slowStonk, boolean dungeonBreaker) {
-        this.pickaxe = pickaxe;
-        this.shovel = shovel;
-        this.axe = axe;
-        this.hasteLevel = hasteLevel;
+    public AlgorithmSetting(boolean stonkDown, boolean stonkTeleport, boolean stonkEChest, boolean routeEtherwarp, int maxStonk, boolean enderpearl, boolean tntpearl, double etherwarpOffset, int etherwarpRadius, double etherwarpLeeway, boolean dungeonBreaker) {
         this.stonkDown = stonkDown;
         this.stonkTeleport = stonkTeleport;
         this.stonkEChest = stonkEChest;
@@ -114,23 +58,13 @@ public class AlgorithmSetting implements Cloneable {
         this.etherwarpLeeway = etherwarpLeeway;
         this.dungeonBreaker = dungeonBreaker;
 
-        this.pickaxeSpeed = pickaxe == null ? -1 : pickaxe.getSpeed(hasteLevel);
-        this.shovelSpeed = shovel == null ? -1 : shovel.getSpeed(hasteLevel) / 30.0;
-        this.axeSpeed = axe == null ? -1 : axe.getSpeed(hasteLevel) / 30.0;
-        this.allowSlowStonkPath = slowStonk;
+
     }
 
 
     public NBTTagCompound serializeToNBT() {
         NBTTagCompound nbt = new NBTTagCompound();
         nbt.setInteger("version", 2);
-
-        nbt.setInteger("haste", hasteLevel);
-
-        nbt.setTag("pickaxe", pickaxe == null ? new NBTTagByte((byte)0) : pickaxe.serialize());
-        nbt.setTag("shovel", shovel == null ? new NBTTagByte((byte)0) : shovel.serialize());
-        nbt.setTag("axe", axe == null ? new NBTTagByte((byte)0) : axe.serialize());
-        nbt.setBoolean("slowStonk", allowSlowStonkPath);
 
         nbt.setBoolean("stonkDown", stonkDown);
         nbt.setBoolean("stonkTeleport", stonkTeleport);

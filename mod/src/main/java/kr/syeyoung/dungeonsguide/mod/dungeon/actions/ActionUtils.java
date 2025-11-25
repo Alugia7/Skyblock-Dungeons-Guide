@@ -43,67 +43,7 @@ public class ActionUtils {
 
     public static ActionDAGBuilder buildActionMoveAndClick(ActionDAGBuilder builder, DungeonRoom dungeonRoom, List<PossibleClickingSpot> spots, OffsetPoint[] target, ActionDAGAccepter eachBuild, boolean guard, AlgorithmSetting settings) throws PathfindImpossibleException {
         spots = spots.stream().filter(a -> {
-            {
-                RequiredTool pickaxe = a.getTools()[0];
-                if (pickaxe != null) {
-                    if (settings.getPickaxeSpeed() < 0) return false;
-                    int lv =  settings.getPickaxe().getTool().getToolMaterial().getHarvestLevel();
-                    if (lv >= pickaxe.getHarvestLv()) {
-                        if (settings.getPickaxeSpeed() / 30 > pickaxe.getBreakingPower()) {
-                            // good
-                        } else {
-                            return false;
-                        }
-                    } else {
-                        if (settings.getPickaxeSpeed() / 100 > pickaxe.getBreakingPower()) {
-                            // good
-                        } else {
-                            return false;
-                        }
-                    }
-                }
-            }
-            {
-                RequiredTool shovel = a.getTools()[1];
-                if (shovel != null) {
-                    if (settings.getShovelSpeed() < 0) return false;
-                    int lv = settings.getShovel().getTool().getToolMaterial().getHarvestLevel();
-                    if (lv >= shovel.getHarvestLv()) {
-                        if (settings.getPickaxeSpeed() / 30 > shovel.getBreakingPower()) {
-                            // good
-                        } else {
-                            return false;
-                        }
-                    } else {
-                        if (settings.getPickaxeSpeed() / 100 > shovel.getBreakingPower()) {
-                            // good
-                        } else {
-                            return false;
-                        }
-                    }
-                }
-            }
-            {
-                RequiredTool axe = a.getTools()[2];
-                if (axe != null) {
-                    if (settings.getAxeSpeed() < 0) return false;
-                    int lv = settings.getAxe().getTool().getToolMaterial().getHarvestLevel();
-                    if (lv >= axe.getHarvestLv()) {
-                        if (settings.getPickaxeSpeed() / 30 > axe.getBreakingPower()) {
-                            // good
-                        } else {
-                            return false;
-                        }
-                    } else {
-                        if (settings.getPickaxeSpeed() / 100 > axe.getBreakingPower()) {
-                            // good
-                        } else {
-                            return false;
-                        }
-                    }
-                }
-            }
-            return true;
+            return settings.isDungeonBreaker();
         }).collect(Collectors.toList());
 
         ActionDAGBuilder last = builder;

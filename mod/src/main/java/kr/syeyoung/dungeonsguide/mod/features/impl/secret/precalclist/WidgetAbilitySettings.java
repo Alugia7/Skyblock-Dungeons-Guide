@@ -55,61 +55,27 @@ public class WidgetAbilitySettings extends Widget implements Renderer {
         FontRenderer fr = Minecraft.getMinecraft().fontRendererObj;
 
         int pickX = 5;
-        if (algorithmSetting.getPickaxe() != null) {
-            renderIndex(pickX, 1, algorithmSetting.getPickaxe().getTool().getToolMaterial().ordinal() * 8, 16, 16, 0);
-            String toDraw = algorithmSetting.getPickaxe().getEfficiency() + "";
-            fr.drawStringWithShadow(toDraw, pickX + 17 - fr.getStringWidth(toDraw), 10, 0xFF979797);
-        } else {
-            renderIndex(pickX, 1, 0, 16, 16, 1);
+        if (algorithmSetting.isDungeonBreaker()) {
+            renderIndex(pickX, 1, 24, 16, 16, 0);
             fr.drawStringWithShadow("X", pickX + 17 - fr.getStringWidth("X"), 10, 0xFFa4232b);
-        }
-
-        int shovelX = 24;
-        if (algorithmSetting.getShovel() != null) {
-            renderIndex(shovelX, 1, algorithmSetting.getShovel().getTool().getToolMaterial().ordinal() * 8 + 1, 16, 16, 0);
-            String toDraw = algorithmSetting.getShovel().getEfficiency() + "";
-            fr.drawStringWithShadow(toDraw, shovelX + 17 - fr.getStringWidth(toDraw), 10, 0xFF979797);
+            fr.drawString("D=", pickX + 20, 2, 0xFFFFFFFF);
+            fr.drawString(algorithmSetting.getMaxStonk()+"", pickX + 20, 10, 0xFFFFFFFF);
         } else {
-            renderIndex(shovelX, 1, 1, 16, 16, 1);
-            fr.drawStringWithShadow("X", shovelX + 17 - fr.getStringWidth("X"), 10, 0xFFa4232b);
+            renderIndex(pickX, 1, 24, 16, 16, 1);
         }
 
-        int axeX = 43;
-        if (algorithmSetting.getAxe() != null) {
-            renderIndex(axeX, 1, algorithmSetting.getAxe().getTool().getToolMaterial().ordinal() * 8 + 2, 16, 16, 0);
-            String toDraw = algorithmSetting.getAxe().getEfficiency() + "";
-            fr.drawStringWithShadow(toDraw, axeX + 17 - fr.getStringWidth(toDraw), 10, 0xFF979797);
-        } else {
-            renderIndex(axeX, 1, 2, 16, 16, 1);
-            fr.drawStringWithShadow("X", axeX + 17 - fr.getStringWidth("X"), 10, 0xFFa4232b);
-        }
-
-        if (algorithmSetting.getAxe() != null || algorithmSetting.getShovel() != null || algorithmSetting.getPickaxe() != null) {
-            fr.drawString("D=", axeX + 20, 2, 0xFFFFFFFF);
-            fr.drawString(algorithmSetting.getMaxStonk()+"", axeX + 20, 10, 0xFFFFFFFF);
-        }
-
-        int hasteX = 76;
-
-        renderIndex(hasteX, 2, 48, 16, 16, algorithmSetting.getHasteLevel() == 0 ? 1 : 0);
-        if (algorithmSetting.getHasteLevel() == 0) {
-            fr.drawStringWithShadow("X", hasteX + 17 - fr.getStringWidth("X"),10,0xFFa4232b);
-        } else {
-            fr.drawStringWithShadow(algorithmSetting.getHasteLevel()+"", hasteX + 17 - fr.getStringWidth(algorithmSetting.getHasteLevel()+""),10,0xFFFFFFFF);
-        }
-
-        renderIndex(95, 2, 40, 16, 16, algorithmSetting.isRouteEtherwarp() ? 0 : 1);
+        renderIndex(44, 2, 40, 16, 16, algorithmSetting.isRouteEtherwarp() ? 0 : 1);
         if (algorithmSetting.isRouteEtherwarp()) {
-            fr.drawString(algorithmSetting.getEtherwarpRadius() + " " + String.format("%.2f", algorithmSetting.getEtherwarpOffset()), 112, 2, 0xFFFFFFFF);
-            fr.drawString(String.format("%.4f", algorithmSetting.getEtherwarpLeeway()), 112, 11, 0xFFFFFFFF);
+            fr.drawString(algorithmSetting.getEtherwarpRadius() + " " + String.format("%.2f", algorithmSetting.getEtherwarpOffset()), 60, 2, 0xFFFFFFFF);
+            fr.drawString(String.format("%.4f", algorithmSetting.getEtherwarpLeeway()), 60, 11, 0xFFFFFFFF);
         }
 
 
-        renderIndex(148, 2, 41, 16, 16, algorithmSetting.isEnderpearl() ? 0 : 1);
-        renderIndex(167, 2, 49, 16, 16, algorithmSetting.isTntpearl() ? 0 : 1);
-        renderIndex(186, 2, 50, 16, 16, algorithmSetting.isStonkDown() ? 0 : 1);
-        renderIndex(205, 2, 56, 16, 16,  algorithmSetting.isStonkTeleport() ? 0 : 1);
-        renderIndex(224, 2, 58, 16, 16, algorithmSetting.isStonkEChest() ? 0 : 1);
+        renderIndex(97, 2, 41, 16, 16, algorithmSetting.isEnderpearl() ? 0 : 1);
+        renderIndex(116, 2, 49, 16, 16, algorithmSetting.isTntpearl() ? 0 : 1);
+        renderIndex(135, 2, 50, 16, 16, algorithmSetting.isStonkDown() ? 0 : 1);
+        renderIndex(154, 2, 56, 16, 16,  algorithmSetting.isStonkTeleport() ? 0 : 1);
+        renderIndex(173, 2, 58, 16, 16, algorithmSetting.isStonkEChest() ? 0 : 1);
 
 
 

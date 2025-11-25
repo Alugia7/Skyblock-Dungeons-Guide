@@ -83,63 +83,26 @@
 
             <!-- Stonk Length -->
 
-            <Text text="§lStonking Tool Settings" size="8" color="#FFFFFFFF"/>
-            <Text text="These are tools you wish to use in stonk routes" size="8" color="#FF777777"/>
+            <Text text="§lDungeonbreaker" size="8" color="#FFFFFFFF"/>
+            <Text text="Whether or not you want to use dungeonbreaker" size="8" color="#FF777777"/>
             <size height="5"/>
             <padding left="5">
                 <col crossAlign="START">
                     <!-- Tools -->
 
-                    <row crossAlign="CENTER">
-                        <size width="32" height="32">
-                            <kr.syeyoung.dungeonsguide.mod.features.impl.secret.precalclist.abilitysettings.WidgetIconButton bind:iconIdx="pickaxeIndex" selected="true" disabled="false" on:click="pickaxeEdit" bind:ref="pickaxeButton"/>
-                        </size>
-                        <size width="50" height="16">
-                            <Text bind:text="pickaxeEfficiency" size="8" color="#FFFFFFFF"/>
-                        </size>
-                        <size width="32" height="32">
-                            <kr.syeyoung.dungeonsguide.mod.features.impl.secret.precalclist.abilitysettings.WidgetIconButton bind:iconIdx="shovelIndex" selected="true" disabled="false" on:click="shovelEdit" bind:ref="shovelButton"/>
-                        </size>
-                        <size width="50" height="16">
-                            <Text bind:text="shovelEfficiency" size="8" color="#FFFFFFFF"/>
-                        </size>
-                        <size width="32" height="32">
-                            <kr.syeyoung.dungeonsguide.mod.features.impl.secret.precalclist.abilitysettings.WidgetIconButton bind:iconIdx="axeIndex" selected="true" disabled="false" on:click="axeEdit" bind:ref="axeButton"/>
-                        </size>
-                        <size width="50" height="16">
-                            <Text bind:text="axeEfficiency" size="8" color="#FFFFFFFF"/>
-                        </size>
-                    </row>
-                    <size height="3"/>
-
-                    <!-- Haste -->
-
-
-                    <row>
-                        <size width="16" height="16">
-                            <ResourceImage location="dungeonsguide:textures/features/precalclist/abilities.png"  x="0" y="192" width="32" height="32" textureWidth="512" textureHeight="512"/>
-                        </size>
-                        <size width="5"/>
-                        <Text text="Haste Level: " color="#FFFFFFFF"/>
-                        <size width="15" height="16">
-                            <kr.syeyoung.dungeonsguide.mod.features.impl.secret.precalclist.abilitysettings.WidgetEfficiencyButton selected="false" disabled="false" bind:text="hasteLevel" on:click="hasteEdit" bind:ref="hasteButton"/>
-                        </size>
-                    </row>
-                    <size height="3"/>
-
                     <row>
                         <flexible>
-                            <SimpleToggleButton width="40" height="14" text="Allow Slow Stonk In path" bind:enabled="slowstonk"/>
+                            <SimpleToggleButton width="40" height="14" text="Use dungeonbreaker" bind:enabled="dungeonBreaker"/>
                         </flexible>
                     </row>
-                    <Text text="This option enables stonk paths that contain non instabreak blocks. This option is not for stonk-clicks." size="8" color="#FF777777"/>
+                    <size height="3"/>
                 </col>
             </padding>
 
 
             <size height="5"/>
-            <Text text="§lStonking Entrance Settings" size="8" color="#FFFFFFFF"/>
-            <Text text="These are ways that you can enter the wall/ceiling" size="8" color="#FF777777"/>
+            <Text text="§lLegacy stonking Entrance Settings" size="8" color="#FFFFFFFF"/>
+            <Text text="Dungeonbreaker shouldn't need these" size="8" color="#FF777777"/>
             <size height="5"/>
             <padding left="5">
                 <col crossAlign="START">

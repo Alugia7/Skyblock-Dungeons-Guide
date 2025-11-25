@@ -191,8 +191,7 @@ public class PathfindRequest { // TODO: fix data flow.
                     for (int x = 0; x < dungeonRoomInfo.getWidth() * 2; x++) {
                         byte data = (byte) (driWorld.getPathfindWorld().getBlock(x, y, z).ordinal() - 1); // 0 is uncached. you're never gonna get that. // 4bit
                         byte pearl = (byte) (driWorld.getPathfindWorld().getPearl(x, y, z).ordinal() - 1); // 3 bit
-                        boolean isInsta = driWorld.getPathfindWorld().isInstabreak(x, y, z);
-                        byte ultimateData = (byte) ((isInsta ? 1 << 7 : 0) | pearl << 4 | data);
+                        byte ultimateData = (byte) ((1 << 7) | pearl << 4 | data); //dungeonbreaker always instabreaks
                         dataOutputStream.write(ultimateData);
                     }
                 }
