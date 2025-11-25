@@ -69,6 +69,19 @@
             <size height="5"/>
             <padding left="5">
                 <col crossAlign="START">
+                    <!-- Tools -->
+
+                    <row>
+                        <flexible>
+                            <SimpleToggleButton width="40" height="14" text="Use Dungeonbreaker" bind:enabled="dungeonBreaker"/>
+                        </flexible>
+                    </row>
+                    <size height="3"/>
+                </col>
+            </padding>
+            <size height="5"/>
+            <padding left="5">
+                <col crossAlign="START">
                     <row crossAlign="CENTER">
                         <Text text="Maximum Stonk Length: " color="#FFFFFFFF"/>
                         <size width="25" height="16">
@@ -80,24 +93,7 @@
                 </col>
             </padding>
             <size height="5"/>
-
-            <!-- Stonk Length -->
-
-            <Text text="§lDungeonbreaker" size="8" color="#FFFFFFFF"/>
-            <Text text="Whether or not you want to use dungeonbreaker" size="8" color="#FF777777"/>
-            <size height="5"/>
-            <padding left="5">
-                <col crossAlign="START">
-                    <!-- Tools -->
-
-                    <row>
-                        <flexible>
-                            <SimpleToggleButton width="40" height="14" text="Use dungeonbreaker" bind:enabled="dungeonBreaker"/>
-                        </flexible>
-                    </row>
-                    <size height="3"/>
-                </col>
-            </padding>
+            
 
 
             <size height="5"/>

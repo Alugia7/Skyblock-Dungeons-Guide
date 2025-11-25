@@ -70,8 +70,8 @@
                 <Text text="Default Pathfind Ability Settings: " color="#FFFFFFFF"/>
                 <size width="3"/>
                 <flexible>
-                    <size height="28">
-                            <size width="195" height="20">
+                    <size height="20">
+                            <size width="193" height="20">
                                 <slot bind:_="abilitySettings"/>
                             </size>
                     </size>

@@ -97,7 +97,7 @@ public class BossfightProcessorLivid extends GeneralBossfightProcessor {
         if (lividStand != null) {
             try {
                 String name = TextUtils.stripColor(lividStand.getName());
-                String healthPart = name.split(" ")[2];
+                String healthPart = name.split(" ")[3]; //Mob categories update changed livid name
                 health = TextUtils.reverseFormat(healthPart.substring(0, healthPart.length() - 1));
             } catch (Exception e) {e.printStackTrace();}
         }
