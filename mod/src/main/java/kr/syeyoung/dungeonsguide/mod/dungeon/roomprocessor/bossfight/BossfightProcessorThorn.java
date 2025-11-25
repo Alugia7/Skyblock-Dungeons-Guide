@@ -23,14 +23,17 @@ import kr.syeyoung.dungeonsguide.mod.features.FeatureRegistry;
 import kr.syeyoung.dungeonsguide.mod.features.impl.etc.FeatureCollectDiagnostics;
 import kr.syeyoung.dungeonsguide.mod.utils.RenderUtils;
 import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityOtherPlayerMP;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.boss.BossStatus;
+import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.monster.EntityGhast;
 import net.minecraft.entity.passive.*;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.event.entity.living.LivingEvent;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -38,8 +41,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import lombok.Getter;
+
+@Getter
 public class BossfightProcessorThorn extends GeneralBossfightProcessor {
 
+    private EntityOtherPlayerMP spiritBear;
 
     public BossfightProcessorThorn(boolean isMasterMode) {
         super(isMasterMode ? "MASTERMODE_CATACOMBS_FLOOR_FOUR" : "CATACOMBS_FLOOR_FOUR");
@@ -57,6 +64,7 @@ public class BossfightProcessorThorn extends GeneralBossfightProcessor {
     @Override
     public void tick() {
         ticksPassed ++;
+        if (spiritBear != null && spiritBear.isDead) spiritBear = null; //remove lingering box
         if (ticksPassed == 20) {
             progressBar.clear();
             for (int x = -30; x <= 30; x++) {
@@ -132,5 +140,12 @@ public class BossfightProcessorThorn extends GeneralBossfightProcessor {
                 return MarkerData.fromEntity(entity, MarkerData.MobType.MINIBOSS, 24);
         }
         return null;
+    }
+
+    @Override
+    public void onEntityUpdate(LivingEvent.LivingUpdateEvent updateEvent) {
+        if (updateEvent.entityLiving.getName().contains("Spirit Bear") && updateEvent.entityLiving instanceof EntityOtherPlayerMP) {
+            spiritBear = (EntityOtherPlayerMP) updateEvent.entityLiving;
+        }
     }
 }
