@@ -57,11 +57,11 @@ public class WidgetAbilitySettings extends Widget implements Renderer {
         int pickX = 5;
         if (algorithmSetting.isDungeonBreaker()) {
             renderIndex(pickX, 1, 24, 16, 16, 0);
-            fr.drawStringWithShadow("X", pickX + 17 - fr.getStringWidth("X"), 10, 0xFFa4232b);
             fr.drawString("D=", pickX + 20, 2, 0xFFFFFFFF);
             fr.drawString(algorithmSetting.getMaxStonk()+"", pickX + 20, 10, 0xFFFFFFFF);
         } else {
             renderIndex(pickX, 1, 24, 16, 16, 1);
+            fr.drawStringWithShadow("X", pickX + 17 - fr.getStringWidth("X"), 10, 0xFFa4232b);
         }
 
         renderIndex(44, 2, 40, 16, 16, algorithmSetting.isRouteEtherwarp() ? 0 : 1);
