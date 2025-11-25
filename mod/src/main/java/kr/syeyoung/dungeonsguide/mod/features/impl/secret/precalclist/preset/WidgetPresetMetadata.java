@@ -148,7 +148,7 @@ public class WidgetPresetMetadata  extends AnnotatedImportOnlyWidget {
         Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
 
 
-        PopupMgr.getPopupMgr(getDomElement()).openPopup(new Modal(400, 300, "Choose New Default Algorithm Setting", new WidgetModalChooseAbilitySettings(), true), (a) -> {
+        PopupMgr.getPopupMgr(getDomElement()).openPopup(new Modal(335, 300, "Choose New Default Algorithm Setting", new WidgetModalChooseAbilitySettings(), true), (a) -> {
             if (a != null) {
                 this.algorithmSettingBindableAttribute.setValue((AlgorithmSetting) a);
                 preset.setAlgorithmSetting((AlgorithmSetting) a);
