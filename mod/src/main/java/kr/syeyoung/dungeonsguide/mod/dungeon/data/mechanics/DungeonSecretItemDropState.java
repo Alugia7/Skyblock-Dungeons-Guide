@@ -77,7 +77,7 @@ public class DungeonSecretItemDropState implements DungeonMechanicState, ISecret
             itemFound = true;
         }
 
-        if (Minecraft.getMinecraft().thePlayer.getDistanceSq(pos) < 40) {
+        if (Minecraft.getMinecraft().thePlayer.getDistanceSq(pos) < 16) { //decreased distance because its unrealible rn
             nearbyTicks++;
             List<EntityItem> items = Minecraft.getMinecraft().theWorld.getEntitiesWithinAABB(EntityItem.class, new AxisAlignedBB(-4, -4, -4, 4, 4, 4).addCoord(pos.getX(), pos.getY(), pos.getZ()));
             if (itemFound) {

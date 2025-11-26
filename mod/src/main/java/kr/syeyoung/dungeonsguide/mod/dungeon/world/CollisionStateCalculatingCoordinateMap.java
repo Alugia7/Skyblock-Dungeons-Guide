@@ -111,26 +111,32 @@ public class CollisionStateCalculatingCoordinateMap implements ICoordinateMap<Co
                             continue label;
                         }
 
-                        int breakFactor = 0; //Dungeonbreaker either instabreaks or doesn't
-                        if (breakFactor > 0) {
+                        //if (breakFactor > 0) {
+ 
                             Block blockToCheck = state.getBlock();
-                            if (i2 == maxY - 1 && (blockToCheck != Blocks.iron_bars && !(blockToCheck instanceof BlockFence)) && !(blockToCheck instanceof BlockSkull)) {
+                            if (i2 == maxY - 1 && (blockToCheck == Blocks.bedrock || blockToCheck == Blocks.hopper || blockToCheck == Blocks.dispenser
+                                 || blockToCheck == Blocks.piston || blockToCheck == Blocks.torch || poses.contains(state) || blockToCheck instanceof BlockSkull)) {
                                 // head level no break
                                 notstonkable = true;
+                                                        //   System.out.println(k1 + " " + i2 + " " + l1);
+                                                       // System.out.println("Check 1");
                             } else if (blockToCheck == Blocks.bedrock || blockToCheck == Blocks.hopper || blockToCheck == Blocks.dispenser
                                  || blockToCheck == Blocks.piston || blockToCheck instanceof BlockSkull
                             ) {                             //Traps, hoppers, and skulls are unbreakable by DB
                                 notstonkable = true;
-                            } else {
+                                                           //System.out.println(k1 + " " + i2 + " " + l1);
+                                                      //System.out.println("Check 2");
+                            }/*  else {
                                 //Crypts and blocks supporting torches are also unbreakable.
                                 //Cracked walls are not but pathfiner will behave because you can superboom it
                                 IBlockState stateAbove = map.getBlock(k1, i2 + 1, l1);
                                 if (stateAbove.getBlock() == Blocks.torch || poses.contains(blockPos.up())) {
                                     notstonkable = true;
+                                                               System.out.println(k1 + " " + i2 + " " + l1);
+                                    System.out.println("Check 3");
                                 }
-                            }
-                        }
-
+                            }*/
+                        //}
                     }
                     size = list2.size();
                     if (block instanceof BlockStairs && i2 != minY - 1) {

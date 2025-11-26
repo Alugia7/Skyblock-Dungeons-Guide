@@ -43,6 +43,7 @@ public class ActionUtils {
 
     public static ActionDAGBuilder buildActionMoveAndClick(ActionDAGBuilder builder, DungeonRoom dungeonRoom, List<PossibleClickingSpot> spots, OffsetPoint[] target, ActionDAGAccepter eachBuild, boolean guard, AlgorithmSetting settings) throws PathfindImpossibleException {
         spots = spots.stream().filter(a -> {
+            //HERE LIKELY
             return settings.isDungeonBreaker();
         }).collect(Collectors.toList());
 

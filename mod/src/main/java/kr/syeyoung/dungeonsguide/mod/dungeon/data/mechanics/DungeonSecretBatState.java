@@ -97,7 +97,7 @@ public class DungeonSecretBatState implements DungeonMechanicState, ISecret {
         }
 
         // can't find the bat!!!
-        if (bpos.distanceSq(Minecraft.getMinecraft().thePlayer.getPosition()) < 49) {
+        if (bpos.distanceSq(Minecraft.getMinecraft().thePlayer.getPosition()) < 25) { //decreased distance because unrealible
             nearbyTicks++;
         }
         if (nearbyTicks > 100) {
