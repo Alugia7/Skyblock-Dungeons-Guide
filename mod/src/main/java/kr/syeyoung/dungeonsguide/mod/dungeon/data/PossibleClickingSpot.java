@@ -32,6 +32,7 @@ public class PossibleClickingSpot {
     private List<OffsetVec3> offsetPointSet;
     private boolean stonkingReq;
     private int clusterId;
+    private List<Boolean> midair; //probably should be a map but I don't wanna rewrite *that* much code lol
 
     protected PossibleClickingSpot() {}
 }

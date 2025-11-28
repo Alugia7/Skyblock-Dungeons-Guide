@@ -55,26 +55,41 @@ public class RaytraceHelper {
     }
 
     public static List<PossibleClickingSpot> combine(List<List<PossibleClickingSpot>> possibleClickingSpotList) {
-        Map<OffsetVec3, List<PossibleClickingSpot>> clickingSpot = new HashMap<>();
-        for (List<PossibleClickingSpot> possibleClickingSpots : possibleClickingSpotList) {
-            for (PossibleClickingSpot possibleClickingSpot : possibleClickingSpots) {
-                for (OffsetVec3 offsetVec3 : possibleClickingSpot.getOffsetPointSet()) {
-                    clickingSpot.computeIfAbsent(offsetVec3, (a) -> new ArrayList<>())
+        Map<OffsetVec3, List<PossibleClickingSpot>> clickingSpot = new HashMap<>(); //maps offsetvectors to possibleclickingspots that contain it
+
+        //combined maps to generate a new PossibleClickingSpot
+        Map<OffsetVec3, RequiredTool[]> actualReq = new HashMap<>();
+        Map<OffsetVec3, Boolean> stonk = new HashMap<>();
+        Map<OffsetVec3, Boolean> air = new HashMap<>();
+
+        for (List<PossibleClickingSpot> possibleClickingSpots : possibleClickingSpotList) { //iterate through each list of possibleclickingspots
+            for (PossibleClickingSpot possibleClickingSpot : possibleClickingSpots) { //iterate through each possibleclickingspot
+                int i = 0;
+                for (OffsetVec3 offsetVec3 : possibleClickingSpot.getOffsetPointSet()) { //iterate thorugh each offetvector in the possibleClickingSpot
+                    clickingSpot.computeIfAbsent(offsetVec3, (a) -> new ArrayList<>()) //add possible clicking spot to the map if it containes the offset point
                             .add(possibleClickingSpot);
+
+                    if (air.get(offsetVec3) != null) {
+                        air.put(offsetVec3 , (air.get(offsetVec3) && possibleClickingSpot.getMidair().get(i)));
+                    }
+                    else {
+                        air.put(offsetVec3 , possibleClickingSpot.getMidair().get(i));
+                    }
+                    i++;
                 }
             }
         }
+
+
+
         clickingSpot.entrySet().removeIf(elem -> elem.getValue().size() != possibleClickingSpotList.size());
 
-
-        Map<OffsetVec3, RequiredTool[]> actualReq = new HashMap<>();
-        Map<OffsetVec3, Boolean> stonk = new HashMap<>();
-
-        for (Map.Entry<OffsetVec3, List<PossibleClickingSpot>> offsetVec3ListEntry : clickingSpot.entrySet()) {
+        for (Map.Entry<OffsetVec3, List<PossibleClickingSpot>> offsetVec3ListEntry : clickingSpot.entrySet()) { //loop through each entry
 
             RequiredTool[] tools = new RequiredTool[3];
-            boolean stonkingReq = offsetVec3ListEntry.getValue().get(0).isStonkingReq();
-            for (PossibleClickingSpot possibleClickingSpot : offsetVec3ListEntry.getValue()) {
+            boolean stonkingReq = offsetVec3ListEntry.getValue().get(0).isStonkingReq(); //seed based on first value
+
+            for (PossibleClickingSpot possibleClickingSpot : offsetVec3ListEntry.getValue()) { //loop over each possibleclickingspot in thie list
                 stonkingReq |= possibleClickingSpot.isStonkingReq();
                 for (int i = 0; i < tools.length; i++) {
                     if (tools[i] == null) {
@@ -91,34 +106,31 @@ public class RaytraceHelper {
             stonk.put(offsetVec3ListEntry.getKey(), stonkingReq);
         }
 
-
         List<PossibleClickingSpot> spots = actualReq.entrySet().stream()
                 .collect(Collectors.<Map.Entry<OffsetVec3, RequiredTool[]>, String>groupingBy(a -> {
                     return Arrays.stream(a.getValue())
                             .map(b -> b == null ? "n" : b.getBreakingPower() + ":" + b.getHarvestLv()).collect(Collectors.joining(";"))+";"+stonk.get(a.getKey());
                 })).values().stream()
                 .map(entries -> {
+                    List<OffsetVec3> positions = entries.stream().map(Map.Entry::getKey)
+                                    .collect(Collectors.toList());
+                    
+                    List<Boolean> finalAirList = new ArrayList<Boolean>();
+
+                    finalAirList.add(air.get(positions.get(0)));
+                    for (OffsetVec3 ov3 : positions) {
+                        finalAirList.add(air.get(ov3));
+                    }
                     return new PossibleClickingSpot(
                             entries.get(0).getValue(),
-                            entries.stream().map(Map.Entry::getKey)
-                                    .collect(Collectors.toList()),
-                            stonk.get(entries.get(0).getKey()), 0
+                            positions,
+                            stonk.get(entries.get(0).getKey()), 0, finalAirList
                     );
                 }).collect(Collectors.toList());
+
+        
         return doClustering(spots);
     }
-
-    public static class StonkCalculationResult {
-        private boolean possible;
-        private RequiredTool[] lastStonk;
-        private RequiredTool[] normalStonk;
-        private int count;
-    }
-
-    private static StonkCalculationResult calculateStonk() {
-        return null;
-    }
-
 
     public static List<PossibleClickingSpot> raycast(World w, BlockPos target, CalculateIsBlocked calculateIsBlocked) {
         IBlockState targetBlockState = w.getBlockState(target);
@@ -127,6 +139,7 @@ public class RaytraceHelper {
 
         Map<Vec3, RequiredTool[]> actualReq = new HashMap<>();
         Map<Vec3, Boolean> stonk = new HashMap<>();
+        Map<Vec3, Boolean> air = new HashMap<>();
 
         for (double x = target.getX() - 4.5; x <= target.getX() + 5.5; x += 0.5) {
             for (double y = target.getY() - 6; y <= target.getY() + 4.5; y += 0.5) {
@@ -240,12 +253,14 @@ public class RaytraceHelper {
                                     }
                                     if (imposs) continue;
 
-                                    if (actualReq.get(playerFoot) == null)
+                                    if (actualReq.get(playerFoot) == null) {
                                         actualReq.put(playerFoot, new RequiredTool[]{
                                                 new RequiredTool(Float.MAX_VALUE, 99),
                                                 new RequiredTool(Float.MAX_VALUE, 99),
                                                 new RequiredTool(Float.MAX_VALUE, 99)
                                         });
+                                        air.put(playerFoot, isAir);
+                                    }
 
                                     RequiredTool[] prev = actualReq.get(playerFoot);
 
@@ -271,12 +286,9 @@ public class RaytraceHelper {
                                         }
                                     }
                                     if (swap) {
-                                        actualReq.put(
-                                                playerFoot, requiredTools
-                                        );
-                                        stonk.put(
-                                                playerFoot, !notstonk
-                                        );
+                                        actualReq.put(playerFoot, requiredTools);
+                                        stonk.put(playerFoot, !notstonk);
+                                        air.put(playerFoot, isAir);
                                     }
                                 }
 
@@ -287,20 +299,27 @@ public class RaytraceHelper {
             }
         }
 
+
         List<PossibleClickingSpot> spots = actualReq.entrySet().stream()
                 .collect(Collectors.<Map.Entry<Vec3, RequiredTool[]>, String>groupingBy(a -> {
                     return Arrays.stream(a.getValue())
                             .map(b -> b == null ? "n" : b.getBreakingPower() + ":" + b.getHarvestLv()).collect(Collectors.joining(";"))+";"+stonk.get(a.getKey());
                 })).values().stream()
                 .map(entries -> {
+                    List<Boolean> floatingList = new ArrayList<Boolean>();
+                    List<OffsetVec3> positions = entries.stream().map(Map.Entry::getKey)
+                                    .map(b ->{ 
+                                        floatingList.add(air.get(b));
+                                        return new OffsetVec3(b.xCoord, b.yCoord - 70, b.zCoord);})
+                                    .collect(Collectors.toList());
+
                     return new PossibleClickingSpot(
                             entries.get(0).getValue(),
-                            entries.stream().map(Map.Entry::getKey)
-                                    .map(b -> new OffsetVec3(b.xCoord, b.yCoord - 70, b.zCoord))
-                                    .collect(Collectors.toList()),
-                            stonk.get(entries.get(0).getKey()), 0
+                            positions,
+                            stonk.get(entries.get(0).getKey()), 0, floatingList
                     );
                 }).collect(Collectors.toList());
+                
         return doClustering(spots);
     }
 
@@ -323,18 +342,24 @@ public class RaytraceHelper {
                                 a.getKey().getTools(),
                                 a.getValue().stream().map(b -> b.getKey()).collect(Collectors.toList()),
                                 a.getKey().isStonkingReq(),
-                                a.getKey().getClusterId()
+                                a.getKey().getClusterId(), a.getKey().getMidair()
                         )
                 ).collect(Collectors.toList());
     }
+
+
     public static List<PossibleClickingSpot> doClustering(List<PossibleClickingSpot> spots) {
         Map<OffsetVec3, PossibleClickingSpot> clusterMap = new HashMap<>();
         Map<OffsetVec3, Integer> clusterId = new HashMap<>();
+        Map<OffsetVec3, Boolean> airmap = new HashMap<>();
 
         for (PossibleClickingSpot spot : spots) {
+            int i = 0;
             for (OffsetVec3 Vec3 : spot.getOffsetPointSet()) {
                 clusterId.put(Vec3, -1);
                 clusterMap.put(Vec3, spot);
+                airmap.put(Vec3, spot.getMidair().get(i));
+                i++;
             }
         }
         List<OffsetVec3> sortedClusterId = clusterId.keySet().stream().sorted(
@@ -461,17 +486,32 @@ public class RaytraceHelper {
                 .collect(Collectors.groupingBy(a -> {
                     return new ImmutablePair<>(clusterId.get(a), clusterMap.get(a));
                 })).entrySet().stream().map(
-                        a -> new PossibleClickingSpot(
-                                a.getKey().getRight().getTools(),
-                                a.getValue(),
-                                a.getKey().getRight().isStonkingReq(),
-                                a.getKey().getLeft()
-                        )
+                        a -> {
+                            List<OffsetVec3> position = a.getValue();
+                            List<Boolean> midairOutput = new ArrayList<Boolean>();
+
+                            for (OffsetVec3 ov3 : position){
+                                midairOutput.add(airmap.get(ov3));
+                            }
+
+                            return new PossibleClickingSpot(
+                                    a.getKey().getRight().getTools(),
+                                    position,
+                                    a.getKey().getRight().isStonkingReq(),
+                                    a.getKey().getLeft(), 
+                                    midairOutput
+                        );}
                 ).collect(Collectors.toList());
     }
+
+
+
+
     public static List<PossibleMoveSpot> findMovespots(World w, BlockPos target, Predicate<Vec3> included, double manhattenDist) {
         return findMovespots(w, target, included, manhattenDist, (x,y,z) -> RaytraceHelper.canStand(w, x,y,z));
     }
+
+
 
     public static List<PossibleMoveSpot> findMovespots(World w, BlockPos target, Predicate<Vec3> included, double manhattenDist, CalculateIsBlocked calculateIsBlocked) {
 
@@ -520,6 +560,8 @@ public class RaytraceHelper {
 
         return doClustering2(moveSpots);
     }
+
+
     public static List<PossibleMoveSpot> doClustering2(List<PossibleMoveSpot> spots) {
         Map<OffsetVec3, PossibleMoveSpot> clusterMap = new HashMap<>();
         Map<OffsetVec3, Integer> clusterId = new HashMap<>();
@@ -836,9 +878,7 @@ public class RaytraceHelper {
 
         BlockPos.MutableBlockPos blockPos = new BlockPos.MutableBlockPos();
         List<AxisAlignedBB> list2 = new ArrayList<>();
-        int size = 0;
 
-        int notstonkable = 0;
         for (int k1 = minX; k1 < maxX; ++k1) {
             for (int l1 = minZ; l1 < maxZ; ++l1) {
                 for (int i2 = minY-1; i2 < maxY; ++i2) {

@@ -42,6 +42,8 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.compress.compressors.snappy.SnappyCompressorInputStream;
+
 @EqualsAndHashCode
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class PrecalculatedStonk {
@@ -112,9 +114,36 @@ public class PrecalculatedStonk {
             }
             List<List<PossibleClickingSpot>> list = new ArrayList<>();
             for (OffsetPoint point : offsetPoint) {
-                list.add(RaytraceHelper.raycast(new DRIWorld(dri, included), new BlockPos(point.getX(), point.getY()+70, point.getZ())));
+                List<PossibleClickingSpot> newpoint = RaytraceHelper.raycast(new DRIWorld(dri, included), new BlockPos(point.getX(), point.getY()+70, point.getZ()));
+                for (PossibleClickingSpot pcs: newpoint){
+                }
+                list.add(newpoint);
             }
             List<PossibleClickingSpot> res = list.size() == 1 ? list.get(0) : RaytraceHelper.combine(list);
+
+            //ADD AIR FILTER HERE
+            for(PossibleClickingSpot pcs : res) {
+                List<Boolean> midair = pcs.getMidair();
+                List<OffsetVec3> point = pcs.getOffsetPointSet();
+
+                if (midair.contains(false) && midair.contains(true)){ //if this pcs has any ground, remove all air because going to the ground is preferable
+                    int j = 0;
+
+                    while (j < midair.size()){
+                        if(midair.get(j) == true) {
+                            midair.remove(j);
+                            point.remove(j);
+                            j--;
+                        }
+                        j++;
+                    }
+
+                    pcs.setMidair(midair);
+                    pcs.setOffsetPointSet(point);
+
+
+                }
+            }
 
             spots[i] = res;
         }
