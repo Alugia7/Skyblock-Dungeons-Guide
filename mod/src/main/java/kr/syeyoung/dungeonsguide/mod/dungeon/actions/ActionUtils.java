@@ -43,7 +43,6 @@ public class ActionUtils {
 
     public static ActionDAGBuilder buildActionMoveAndClick(ActionDAGBuilder builder, DungeonRoom dungeonRoom, List<PossibleClickingSpot> spots, OffsetPoint[] target, ActionDAGAccepter eachBuild, boolean guard, AlgorithmSetting settings) throws PathfindImpossibleException {
         spots = spots.stream().filter(a -> {
-            //HERE LIKELY
             return settings.isDungeonBreaker();
         }).collect(Collectors.toList());
 
@@ -68,7 +67,8 @@ public class ActionUtils {
 
             AtomicAction.Builder builder2 = new AtomicAction.Builder();
             for (OffsetPoint offsetPoint : target) {
-                builder2.requires(integerListEntry.getKey().right ? new ActionStonkClick(offsetPoint) : new ActionClick(offsetPoint));
+                //Each cluster either has all midair or none midair due to pruning
+                builder2.requires(integerListEntry.getKey().right ? new ActionStonkClick(offsetPoint, integerListEntry.getValue().get(0).getMidair().get(0)) : new ActionClick(offsetPoint));
             }
             if (integerListEntry.getKey().right) {
                 builder1 = builder1.or(builder2

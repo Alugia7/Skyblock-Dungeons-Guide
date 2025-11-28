@@ -111,10 +111,7 @@ public class FeatureStonkDebug extends SimpleFeature {
             cy /= spot.getOffsetPointSet().size();
             cz /= spot.getOffsetPointSet().size();
             cy += 0.2f;
-            RenderUtils.drawTextAtWorld(
-                    Arrays.stream(spot.getTools())
-                            .map(a -> a == null ? "null" : a.getBreakingPower()+":"+a.getHarvestLv()).collect(Collectors.joining(";"))
-                    +":::"+spot.getClusterId()+"/"+spot.isStonkingReq(), (float) cx, (float) cy, (float) cz, actual.getRGB(), 0.01f, false, true, event.partialTicks);
+            RenderUtils.drawTextAtWorld(spot.getClusterId()+"/"+spot.isStonkingReq(), (float) cx, (float) cy, (float) cz, actual.getRGB(), 0.01f, false, true, event.partialTicks);
 
 
         }

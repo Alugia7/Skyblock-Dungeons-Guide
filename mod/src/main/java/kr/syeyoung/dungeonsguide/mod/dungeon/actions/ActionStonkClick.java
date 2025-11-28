@@ -37,9 +37,11 @@ public class ActionStonkClick extends AbstractAction {
     private Predicate<ItemStack> predicate = Predicates.alwaysTrue();
 
     private boolean clicked = false;
+    private boolean air = false;
 
-    public ActionStonkClick(OffsetPoint target) {
+    public ActionStonkClick(OffsetPoint target, boolean air) {
         this.target = target;
+        this.air = air;
     }
 
     @Override
@@ -68,6 +70,6 @@ public class ActionStonkClick extends AbstractAction {
 
     @Override
     public double evalulateCost(RoomState state, DungeonRoom room, TSPCache tspCache, RoomPresetPathPlanner pathPlanner) {
-        return 5;
+        return air ? 50 : 5; //large penalty if midair
     }
 }

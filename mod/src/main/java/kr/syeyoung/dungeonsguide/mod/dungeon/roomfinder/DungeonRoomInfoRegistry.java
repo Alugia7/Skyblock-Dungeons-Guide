@@ -50,7 +50,8 @@ public class DungeonRoomInfoRegistry {
     private static final List<String> DEV_USERS =
             Arrays.asList(
                     "e686fe0aab804a71ac7011dc8c2b534c", //syeyoung
-                    "a7d6b3f1842548e58acc9a38ab9b86f7" // whalker
+                    "a7d6b3f1842548e58acc9a38ab9b86f7", // whalker
+                    "43c80944409943e3948a5f183a1ca0d4" //Algi_
             );
 
     @Getter

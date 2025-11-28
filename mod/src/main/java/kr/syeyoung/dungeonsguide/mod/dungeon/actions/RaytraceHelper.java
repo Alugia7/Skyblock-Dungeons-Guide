@@ -58,7 +58,6 @@ public class RaytraceHelper {
         Map<OffsetVec3, List<PossibleClickingSpot>> clickingSpot = new HashMap<>(); //maps offsetvectors to possibleclickingspots that contain it
 
         //combined maps to generate a new PossibleClickingSpot
-        Map<OffsetVec3, RequiredTool[]> actualReq = new HashMap<>();
         Map<OffsetVec3, Boolean> stonk = new HashMap<>();
         Map<OffsetVec3, Boolean> air = new HashMap<>();
 
@@ -86,31 +85,17 @@ public class RaytraceHelper {
 
         for (Map.Entry<OffsetVec3, List<PossibleClickingSpot>> offsetVec3ListEntry : clickingSpot.entrySet()) { //loop through each entry
 
-            RequiredTool[] tools = new RequiredTool[3];
             boolean stonkingReq = offsetVec3ListEntry.getValue().get(0).isStonkingReq(); //seed based on first value
 
             for (PossibleClickingSpot possibleClickingSpot : offsetVec3ListEntry.getValue()) { //loop over each possibleclickingspot in thie list
                 stonkingReq |= possibleClickingSpot.isStonkingReq();
-                for (int i = 0; i < tools.length; i++) {
-                    if (tools[i] == null) {
-                        tools[i] = possibleClickingSpot.getTools()[i];
-                        continue;
-                    }
-                    if (possibleClickingSpot.getTools()[i] == null) continue;
-
-                    tools[i].setBreakingPower(Math.max(tools[i].getBreakingPower(), possibleClickingSpot.getTools()[i].getBreakingPower()));
-                    tools[i].setHarvestLv(Math.max(tools[i].getHarvestLv(), possibleClickingSpot.getTools()[i].getHarvestLv()));
-                }
             }
-            actualReq.put(offsetVec3ListEntry.getKey(), tools);
             stonk.put(offsetVec3ListEntry.getKey(), stonkingReq);
         }
 
-        List<PossibleClickingSpot> spots = actualReq.entrySet().stream()
-                .collect(Collectors.<Map.Entry<OffsetVec3, RequiredTool[]>, String>groupingBy(a -> {
-                    return Arrays.stream(a.getValue())
-                            .map(b -> b == null ? "n" : b.getBreakingPower() + ":" + b.getHarvestLv()).collect(Collectors.joining(";"))+";"+stonk.get(a.getKey());
-                })).values().stream()
+        List<PossibleClickingSpot> spots = stonk.entrySet().stream()
+                .collect(Collectors.groupingBy(a -> stonk.get(a.getKey())
+                )).values().stream()
                 .map(entries -> {
                     List<OffsetVec3> positions = entries.stream().map(Map.Entry::getKey)
                                     .collect(Collectors.toList());
@@ -122,7 +107,7 @@ public class RaytraceHelper {
                         finalAirList.add(air.get(ov3));
                     }
                     return new PossibleClickingSpot(
-                            entries.get(0).getValue(),
+                            null,
                             positions,
                             stonk.get(entries.get(0).getKey()), 0, finalAirList
                     );
@@ -137,7 +122,6 @@ public class RaytraceHelper {
         targetBlockState.getBlock().setBlockBoundsBasedOnState(w, target);
         AxisAlignedBB bb = targetBlockState.getBlock().getSelectedBoundingBox(w, target);
 
-        Map<Vec3, RequiredTool[]> actualReq = new HashMap<>();
         Map<Vec3, Boolean> stonk = new HashMap<>();
         Map<Vec3, Boolean> air = new HashMap<>();
 
@@ -169,8 +153,6 @@ public class RaytraceHelper {
                                     if (blocks.size() == 0) continue;
                                     if (!blocks.get(blocks.size() - 1).equals(target)) continue;
 
-                                    RequiredTool[] requiredTools = new RequiredTool[3];
-                                    // 0 pick 1 shovel 2 axe
                                     boolean imposs = false;
                                     boolean notstonk = blocks.lastIndexOf(target) == 0;
                                     int until = notstonk ? 0 : blocks.lastIndexOf(blocks.get(blocks.lastIndexOf(target) - 1));
@@ -180,33 +162,11 @@ public class RaytraceHelper {
                                         IBlockState from_state = w.getBlockState(pos);
                                         Block from_block = from_state.getBlock();
 
-                                        BlockBreakData breakData = new BlockBreakData(
-                                                (isAir ? 5 : 1) * from_block.getBlockHardness(w, pos),
-                                                from_block.getHarvestLevel(from_state),
-                                                from_block.getHarvestTool(from_state)
-                                        );
-
-                                        if (breakData.hardness < 0) {
-                                            breakData.hardness = 9999;
+                                        if (from_block == Blocks.bedrock || from_block == Blocks.hopper || from_block == Blocks.dispenser
+                                            || from_block == Blocks.piston || from_block instanceof BlockSkull) {
                                             imposs = true;
                                             continue;
                                         }
-
-                                        int idx = 0;
-                                        if ("pickaxe".equals(breakData.toolClass)|| from_block.getMaterial() == Material.rock || from_block.getMaterial() == Material.anvil || from_block.getMaterial() == Material.iron) {
-                                            idx = 0;
-                                        } else if ("axe".equals(breakData.toolClass)||
-                                                from_block.getMaterial() == Material.wood ||
-                                                from_block.getMaterial() == Material.plants ||
-                                                from_block.getMaterial() == Material.vine) {
-                                            idx = 2;
-                                        } else if ("shovel".equals(breakData.toolClass)) {
-                                            idx = 1;
-                                        }
-
-                                        requiredTools[idx] = new RequiredTool(
-                                                0, 0
-                                        );
 
                                     }
                                     if (isAir) {
@@ -220,76 +180,16 @@ public class RaytraceHelper {
                                         IBlockState from_state = w.getBlockState(from_bpos);
                                         Block from_block = from_state.getBlock();
 
-                                        BlockBreakData breakData = new BlockBreakData(
-                                                (isAir ? 5 : 1) * from_block.getBlockHardness(w, from_bpos),
-                                                from_block.getHarvestLevel(from_state),
-                                                from_block.getHarvestTool(from_state)
-                                        );
-                                        if (breakData.hardness < 0) {
+                                        if (from_block == Blocks.bedrock || from_block == Blocks.hopper || from_block == Blocks.dispenser
+                                            || from_block == Blocks.piston || from_block instanceof BlockSkull) {
                                             imposs = true;
                                             break;
                                         }
 
-                                        int idx = 0;
-                                        if ("pickaxe".equals(breakData.toolClass) || from_block.getMaterial() == Material.rock || from_block.getMaterial() == Material.anvil || from_block.getMaterial() == Material.iron) {
-                                            idx = 0;
-                                        } else if ("axe".equals(breakData.toolClass) ||
-                                                from_block.getMaterial() == Material.wood ||
-                                                from_block.getMaterial() == Material.plants ||
-                                                from_block.getMaterial() == Material.vine
-                                        ) {
-                                            idx = 2;
-                                        } else if ("shovel".equals(breakData.toolClass) ) {
-                                            idx = 1;
-                                        } else {
-                                            breakData.harvestLv = 10;
-                                        }
-
-                                        if (requiredTools[idx] == null) requiredTools[idx] = new RequiredTool();
-                                        if (requiredTools[idx].getBreakingPower() < breakData.hardness)
-                                            requiredTools[idx].setBreakingPower(breakData.hardness);
-                                        if (requiredTools[idx].getHarvestLv() < breakData.harvestLv)
-                                            requiredTools[idx].setHarvestLv(breakData.harvestLv);
                                     }
                                     if (imposs) continue;
-
-                                    if (actualReq.get(playerFoot) == null) {
-                                        actualReq.put(playerFoot, new RequiredTool[]{
-                                                new RequiredTool(Float.MAX_VALUE, 99),
-                                                new RequiredTool(Float.MAX_VALUE, 99),
-                                                new RequiredTool(Float.MAX_VALUE, 99)
-                                        });
-                                        air.put(playerFoot, isAir);
-                                    }
-
-                                    RequiredTool[] prev = actualReq.get(playerFoot);
-
-                                    boolean swap = false;
-                                    for (int i = 0; i < prev.length; i++) {
-                                        RequiredTool prevTool = prev[i];
-                                        RequiredTool newTool = requiredTools[i];
-                                        if (prevTool == null) {
-                                            continue;
-                                        }
-                                        if (newTool == null) {
-                                            swap = true;
-                                            break;
-                                        }
-
-                                        if (newTool.getHarvestLv() < prevTool.getHarvestLv()) {
-                                            swap = true;
-                                            break;
-                                        }
-                                        if (newTool.getBreakingPower() < prevTool.getBreakingPower()) {
-                                            swap = true;
-                                            break;
-                                        }
-                                    }
-                                    if (swap) {
-                                        actualReq.put(playerFoot, requiredTools);
                                         stonk.put(playerFoot, !notstonk);
                                         air.put(playerFoot, isAir);
-                                    }
                                 }
 
                             }
@@ -300,11 +200,9 @@ public class RaytraceHelper {
         }
 
 
-        List<PossibleClickingSpot> spots = actualReq.entrySet().stream()
-                .collect(Collectors.<Map.Entry<Vec3, RequiredTool[]>, String>groupingBy(a -> {
-                    return Arrays.stream(a.getValue())
-                            .map(b -> b == null ? "n" : b.getBreakingPower() + ":" + b.getHarvestLv()).collect(Collectors.joining(";"))+";"+stonk.get(a.getKey());
-                })).values().stream()
+        List<PossibleClickingSpot> spots = stonk.entrySet().stream()
+                .collect(Collectors.groupingBy(a -> stonk.get(a.getKey())
+                )).values().stream()
                 .map(entries -> {
                     List<Boolean> floatingList = new ArrayList<Boolean>();
                     List<OffsetVec3> positions = entries.stream().map(Map.Entry::getKey)
@@ -314,7 +212,7 @@ public class RaytraceHelper {
                                     .collect(Collectors.toList());
 
                     return new PossibleClickingSpot(
-                            entries.get(0).getValue(),
+                        null,
                             positions,
                             stonk.get(entries.get(0).getKey()), 0, floatingList
                     );
@@ -339,7 +237,7 @@ public class RaytraceHelper {
                 .collect(Collectors.groupingBy(a -> clusterMap.get(a.getKey())))
                 .entrySet().stream().map(
                         a -> new PossibleClickingSpot(
-                                a.getKey().getTools(),
+                            null,
                                 a.getValue().stream().map(b -> b.getKey()).collect(Collectors.toList()),
                                 a.getKey().isStonkingReq(),
                                 a.getKey().getClusterId(), a.getKey().getMidair()
@@ -495,7 +393,7 @@ public class RaytraceHelper {
                             }
 
                             return new PossibleClickingSpot(
-                                    a.getKey().getRight().getTools(),
+                                null,
                                     position,
                                     a.getKey().getRight().isStonkingReq(),
                                     a.getKey().getLeft(), 
