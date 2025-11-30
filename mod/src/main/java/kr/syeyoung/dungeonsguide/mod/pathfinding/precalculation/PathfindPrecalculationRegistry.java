@@ -1,7 +1,5 @@
 package kr.syeyoung.dungeonsguide.mod.pathfinding.precalculation;
 
-import com.google.common.collect.Sets;
-import com.sun.nio.file.ExtendedWatchEventModifier;
 import kr.syeyoung.dungeonsguide.mod.DungeonsGuide;
 import kr.syeyoung.dungeonsguide.mod.pathfinding.abilitysetting.AlgorithmSettingRegistry;
 import lombok.Getter;
@@ -13,6 +11,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
 public class PathfindPrecalculationRegistry {
+
     @Getter
     private List<PathfindPrecalculation> loaded = new ArrayList<>();
     private Map<String, List<PathfindPrecalculation>> byId = new HashMap<>();
@@ -25,120 +24,163 @@ public class PathfindPrecalculationRegistry {
     @Getter
     private static PathfindPrecalculationRegistry INSTANCE;
 
+    private Thread watcherThread;
+    private WatchService watchService;
+
+    // Shutdown singleton safely
+    public static void shutdown() {
+        if (INSTANCE != null) {
+            INSTANCE.stopWatcher();
+            INSTANCE.clearAll();
+            INSTANCE = null;
+        }
+    }
+
+    private void stopWatcher() {
+        try {
+            if (watcherThread != null) watcherThread.interrupt();
+        } catch (Throwable ignored) {}
+        try {
+            if (watchService != null) watchService.close();
+        } catch (Throwable ignored) {}
+    }
+
+    private void clearAll() {
+        loaded.clear();
+        byId.clear();
+        byFile.clear();
+        byRoom.clear();
+        byHash.clear();
+        byId2.clear();
+    }
+
     public PathfindPrecalculationRegistry(File dir) throws IOException {
-        if (INSTANCE != null) throw new IllegalStateException("Already initialized");
-        PathfindPrecalculationRegistry.INSTANCE = this;
+        if (INSTANCE != null) {
+            INSTANCE.stopWatcher();
+            INSTANCE.clearAll();
+        }
+        INSTANCE = this;
 
         loadAll(dir);
 
-        new Thread(DungeonsGuide.THREAD_GROUP, () -> {
+        // Initialize WatchService
+        this.watchService = FileSystems.getDefault().newWatchService();
+
+        // Watcher thread
+        watcherThread = new Thread(DungeonsGuide.THREAD_GROUP, () -> {
             try {
-                FileSystem fs = FileSystems.getDefault();
-                WatchService ws = fs.newWatchService();
+                WatchEvent.Kind<?>[] kinds = {
+                        StandardWatchEventKinds.ENTRY_CREATE,
+                        StandardWatchEventKinds.ENTRY_DELETE,
+                        StandardWatchEventKinds.ENTRY_MODIFY
+                };
 
-                Path pTemp = dir.toPath();
-                WatchEvent.Kind[] kinds = new WatchEvent.Kind[] {StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY};
-                Files.walkFileTree(pTemp, new SimpleFileVisitor<Path>() {
-
+                // Register all directories recursively
+                Files.walkFileTree(dir.toPath(), new SimpleFileVisitor<Path>() {
                     @Override
-                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                        if (Files.isDirectory(dir))
-                            dir.register(ws, kinds);
+                    public FileVisitResult preVisitDirectory(Path d, BasicFileAttributes attrs) throws IOException {
+                        d.register(watchService, kinds);
                         return FileVisitResult.CONTINUE;
                     }
                 });
 
-                pTemp.register(ws, kinds);
-
-                while(!Thread.interrupted())
-                {
+                while (!Thread.currentThread().isInterrupted()) {
+                    WatchKey key;
                     try {
-                        WatchKey k = ws.take();
-                        for (WatchEvent<?> e : k.pollEvents()) {
-                            Path c = (Path) e.context();
-                            if (e.kind() == StandardWatchEventKinds.ENTRY_CREATE && Files.isDirectory(c)) {
-                                c.register(ws, kinds);
-                                Files.walkFileTree(c, new SimpleFileVisitor<Path>() {
-                                    @Override
-                                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                        if (file.getFileName().toString().endsWith(".pfres"))
-                                            register(new PathfindPrecalculation(c.toFile()));
-                                        return FileVisitResult.CONTINUE;
-                                    }
-                                });
-                                continue;
-                            }
-
-                            if (!c.getFileName().toString().endsWith(".pfres")) continue;
-
-                            if (e.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-                                register(new PathfindPrecalculation(c.toFile()));
-                            } else if (e.kind()== StandardWatchEventKinds.ENTRY_DELETE) {
-                                PathfindPrecalculation precalculation = getByFile(c.toFile().getAbsolutePath());
-                                unregister(precalculation);
-                            } else if (e.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
-                                PathfindPrecalculation precalculation = getByFile(c.toFile().getAbsolutePath());
-                                unregister(precalculation);
-                                register(new PathfindPrecalculation(c.toFile()));
-                            }
-                            System.out.printf("%s %d %s\n", e.kind(), e.count(), c);
-                        }
-                        k.reset();
+                        key = watchService.take();
                     } catch (InterruptedException e) {
                         break;
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
+
+                    Path parent = (Path) key.watchable();
+
+                    for (WatchEvent<?> event : key.pollEvents()) {
+                        Path relative = (Path) event.context();
+                        Path full = parent.resolve(relative);
+
+                        if (Files.isDirectory(full) && event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
+                            full.register(watchService, kinds);
+                            continue;
+                        }
+
+                        if (!full.toString().endsWith(".pfres")) continue;
+
+                        if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
+                            register(new PathfindPrecalculation(full.toFile()));
+                        } else if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
+                            unregister(getByFile(full.toFile().getAbsolutePath()));
+                        } else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
+                            unregister(getByFile(full.toFile().getAbsolutePath()));
+                            register(new PathfindPrecalculation(full.toFile()));
+                        }
+                    }
+                    key.reset();
                 }
-            } catch (Exception e) {
+
+            } catch (IOException e) {
                 e.printStackTrace();
-                throw new RuntimeException(e);
             }
-        }).start();
+        }, "DG-PFRES-Watcher");
+
+        watcherThread.setDaemon(true);
+        watcherThread.start();
     }
 
     public void register(PathfindPrecalculation precalculation) {
-        if (!byId.containsKey(precalculation.getId()))
-            byId.put(precalculation.getId(), new ArrayList<>());
-        byId.get(precalculation.getId()).add(precalculation);
+        byId.computeIfAbsent(precalculation.getId(), k -> new ArrayList<>()).add(precalculation);
+        byId2.computeIfAbsent(precalculation.getTargetId(), k -> new ArrayList<>()).add(precalculation);
+        byHash.computeIfAbsent(precalculation.getTargetHash(), k -> new ArrayList<>()).add(precalculation);
+        byRoom.computeIfAbsent(precalculation.getRoomUID(), k -> new ArrayList<>()).add(precalculation);
         byFile.put(precalculation.getFile(), precalculation);
-        if (!byRoom.containsKey(precalculation.getRoomUID()))
-            byRoom.put(precalculation.getRoomUID(), new ArrayList<>());
-        byRoom.get(precalculation.getRoomUID()).add(precalculation);
-        if (!byHash.containsKey(precalculation.getTargetHash()))
-            byHash.put(precalculation.getTargetHash(), new ArrayList<>());
-        byHash.get(precalculation.getTargetHash()).add(precalculation);
-        if (!byId2.containsKey(precalculation.getTargetId()))
-            byId2.put(precalculation.getTargetId(), new ArrayList<>());
-        byId2.get(precalculation.getTargetId()).add(precalculation);
         loaded.add(precalculation);
-
 
         AlgorithmSettingRegistry.registerAlgorithmSetting(precalculation.getAlgorithmSetting());
     }
 
+    public void unregister(PathfindPrecalculation precalculation) {
+        if (precalculation == null) return;
+
+        byId.getOrDefault(precalculation.getId(), Collections.emptyList()).remove(precalculation);
+        byId2.getOrDefault(precalculation.getTargetId(), Collections.emptyList()).remove(precalculation);
+        byHash.getOrDefault(precalculation.getTargetHash(), Collections.emptyList()).remove(precalculation);
+        byRoom.getOrDefault(precalculation.getRoomUID(), Collections.emptyList()).remove(precalculation);
+        byFile.remove(precalculation.getFile());
+        loaded.remove(precalculation);
+    }
+
+    public void loadAll(File dir) throws IOException {
+        clearAll();
+        Files.walk(dir.toPath(), FileVisitOption.FOLLOW_LINKS).forEach(path -> {
+            if (!path.getFileName().toString().endsWith(".pfres")) return;
+            try {
+                register(new PathfindPrecalculation(path.toFile()));
+            } catch (Exception e) {
+                System.out.println("Failed to load: " + path.getFileName());
+                e.printStackTrace();
+            }
+        });
+    }
+
     public PathfindPrecalculation getById(String id) {
-        List<PathfindPrecalculation> list  =getsById(id);
-        return list.isEmpty() ? null : list.get(0);
-    }
-    public List<PathfindPrecalculation> getsById(String id) {
         List<PathfindPrecalculation> list = byId.get(id);
-        if (list == null) return Collections.emptyList();
-        return list;
+        return list == null || list.isEmpty() ? null : list.get(0);
     }
+
     public PathfindPrecalculation getByTargetId(String targetid) {
-        List<PathfindPrecalculation> list  =getsByTargetId(targetid);
-        return list.isEmpty() ? null : list.get(0);
-    }
-    public List<PathfindPrecalculation> getsByTargetId(String targetid) {
         List<PathfindPrecalculation> list = byId2.get(targetid);
-        if (list == null) return Collections.emptyList();
-        return list;
+        return list == null || list.isEmpty() ? null : list.get(0);
     }
+
+    public List<PathfindPrecalculation> getsById(String id) {
+        return byId.getOrDefault(id, Collections.emptyList());
+    }
+
+    public List<PathfindPrecalculation> getsByTargetId(String targetid) {
+        return byId2.getOrDefault(targetid, Collections.emptyList());
+    }
+
     public List<PathfindPrecalculation> getsByHash(String hash) {
-        List<PathfindPrecalculation> list = byHash.get(hash);
-        if (list == null) return Collections.emptyList();
-        return list;
+        return byHash.getOrDefault(hash, Collections.emptyList());
     }
 
     public List<PathfindPrecalculation> getByRoom(UUID roomUID) {
@@ -148,42 +190,4 @@ public class PathfindPrecalculationRegistry {
     public PathfindPrecalculation getByFile(String file) {
         return byFile.get(file);
     }
-
-    public void unregister(PathfindPrecalculation precalculation) {
-        byId.get(precalculation.getId()).remove(precalculation);
-        if (byId.get(precalculation.getId()).isEmpty()) byId.remove(precalculation.getId());
-
-        byFile.remove(precalculation.getFile());
-        byRoom.get(precalculation.getRoomUID()).remove(precalculation);
-        byHash.get(precalculation.getTargetHash()).remove(precalculation);
-        loaded.remove(precalculation);
-    }
-
-
-    public void loadAll(File dir) throws IOException {
-        byId.clear();
-        byHash.clear();
-        byRoom.clear();
-        byId2.clear();
-        byFile.clear();
-
-        try {
-            Files.walk(dir.toPath(), FileVisitOption.FOLLOW_LINKS)
-                    .forEach(path -> {
-                        if (!path.getFileName().toString().endsWith(".pfres")) return;
-                        try {
-                            PathfindPrecalculation pathfindCache = new PathfindPrecalculation(path.toFile());
-                            register(pathfindCache);
-                        } catch (Exception e) {
-                            System.out.println(path.getFileName());
-                            e.printStackTrace();
-                        }
-                    });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-
-
 }
