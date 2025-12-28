@@ -163,27 +163,48 @@ public class ActionDAGBuilder {
         if (parent != null)
             return getRoot().build();
         Deque<ActionDAGNode> dfs = new ArrayDeque<>();
-        dfs.push(current);
+        
+        Map<ActionDAGNode, Iterator<ActionDAGNode>> childIters = new IdentityHashMap<>();
+        Set<ActionDAGNode> inStack = new HashSet<>();
         Set<ActionDAGNode> visited = new HashSet<>();
         List<ActionDAGNode> allTheNodes = new ArrayList<>();
+
+        dfs.push(current);
+        inStack.add(current);
         int idx = 1;
         int id = 0;
+
         while (!dfs.isEmpty()) {
             ActionDAGNode current =dfs.peek();
-            ActionDAGNode next = current.getAllChildren()
-                    .stream().filter(a -> !visited.contains(a))
-                    .findFirst().orElse(null);
+            
+            Iterator<ActionDAGNode> it = childIters.computeIfAbsent(
+                current, n -> n.getAllChildren().iterator()
+            );
+            ActionDAGNode next = null;
+
+            while (it.hasNext()) {
+                ActionDAGNode candidate = it.next();
+            if (!visited.contains(candidate)) {
+                next = candidate;
+                break;
+                }
+            }
+
             if (next == null) {
                 visited.add(current);
+                inStack.remove(current);
                 dfs.pop();
                 idx = current.setIdx(idx);
                 current.setId(id++);
                 allTheNodes.add(current);
                 continue;
             }
-            if (dfs.contains(next)) throw new IllegalStateException("Cycle detected!");
+             if (!inStack.add(next)) {
+                throw new IllegalStateException("Cycle detected!");
+            }
             dfs.push(next);
         }
+
         return new ActionDAG(dungeonRoom, idx, current, allTheNodes);
     }
 }
