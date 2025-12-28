@@ -108,13 +108,14 @@ public class PathfindPrecalculationRegistry {
                         if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
                             register(new PathfindPrecalculation(full.toFile()));
                         } else if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
-                            unregister(getByFile(full.toFile().getAbsolutePath()));
+                            unregisterByPath(full);
                         } else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
-                            unregister(getByFile(full.toFile().getAbsolutePath()));
+                            unregisterByPath(full);
                             register(new PathfindPrecalculation(full.toFile()));
                         }
                     }
                     key.reset();
+                    cleanupMissingFiles();
                 }
 
             } catch (IOException e) {
@@ -125,30 +126,74 @@ public class PathfindPrecalculationRegistry {
         watcherThread.setDaemon(true);
         watcherThread.start();
     }
-
-    public void register(PathfindPrecalculation precalculation) {
+    
+    public synchronized void register(PathfindPrecalculation precalculation) {
         byId.computeIfAbsent(precalculation.getId(), k -> new ArrayList<>()).add(precalculation);
         byId2.computeIfAbsent(precalculation.getTargetId(), k -> new ArrayList<>()).add(precalculation);
         byHash.computeIfAbsent(precalculation.getTargetHash(), k -> new ArrayList<>()).add(precalculation);
         byRoom.computeIfAbsent(precalculation.getRoomUID(), k -> new ArrayList<>()).add(precalculation);
-        byFile.put(precalculation.getFile(), precalculation);
+        byFile.put(normalize(Paths.get(precalculation.getFile())), precalculation);
         loaded.add(precalculation);
 
         AlgorithmSettingRegistry.registerAlgorithmSetting(precalculation.getAlgorithmSetting());
     }
 
-    public void unregister(PathfindPrecalculation precalculation) {
-        if (precalculation == null) return;
+    public synchronized void unregister(PathfindPrecalculation p) {
+        if (p == null) return;
 
-        byId.getOrDefault(precalculation.getId(), Collections.emptyList()).remove(precalculation);
-        byId2.getOrDefault(precalculation.getTargetId(), Collections.emptyList()).remove(precalculation);
-        byHash.getOrDefault(precalculation.getTargetHash(), Collections.emptyList()).remove(precalculation);
-        byRoom.getOrDefault(precalculation.getRoomUID(), Collections.emptyList()).remove(precalculation);
-        byFile.remove(precalculation.getFile());
-        loaded.remove(precalculation);
+        removeFromMapList(byId, p.getId(), p);
+        removeFromMapList(byId2, p.getTargetId(), p);
+        removeFromMapList(byHash, p.getTargetHash(), p);
+        removeFromMapList(byRoom, p.getRoomUID(), p);
+
+        byFile.remove(normalize(Paths.get(p.getFile())));
+        loaded.remove(p);
+
+        AlgorithmSettingRegistry.unregisterAlgorithmSetting(p.getAlgorithmSetting());
     }
 
-    public void loadAll(File dir) throws IOException {
+    private synchronized void unregisterByPath(Path full) {
+        String key = normalize(full);
+
+        PathfindPrecalculation p = byFile.get(key);
+        if (p != null) {
+            unregister(p);
+            return;
+        }
+
+        // Safety sweep (still good to keep)
+        List<PathfindPrecalculation> copy = new ArrayList<>(loaded);
+        for (PathfindPrecalculation pc : copy) {
+            if (normalize(Paths.get(pc.getFile())).equals(key)) {
+                unregister(pc);
+            }
+        }
+    }
+
+    private static <K> void removeFromMapList(
+            Map<K, List<PathfindPrecalculation>> map,
+            K key,
+            PathfindPrecalculation value
+    ) {
+        List<PathfindPrecalculation> list = map.get(key);
+        if (list == null) return;
+
+        list.remove(value);
+        if (list.isEmpty()) {
+            map.remove(key);
+        }
+    }
+
+    private synchronized void cleanupMissingFiles() {
+        List<PathfindPrecalculation> copy = new ArrayList<>(loaded);
+        for (PathfindPrecalculation p : copy) {
+            if (!new File(p.getFile()).exists()) {
+                unregister(p);
+            }
+        }
+    }
+
+    public synchronized void loadAll(File dir) throws IOException {
         clearAll();
         Files.walk(dir.toPath(), FileVisitOption.FOLLOW_LINKS).forEach(path -> {
             if (!path.getFileName().toString().endsWith(".pfres")) return;
@@ -188,6 +233,13 @@ public class PathfindPrecalculationRegistry {
     }
 
     public PathfindPrecalculation getByFile(String file) {
-        return byFile.get(file);
+        return byFile.get(normalize(Paths.get(file)));
     }
+    private static String normalize(Path p) {
+    try {
+        return p.toFile().getCanonicalPath().toLowerCase(Locale.ROOT);
+    } catch (IOException e) {
+        return p.toAbsolutePath().toString().toLowerCase(Locale.ROOT);
+    }
+}
 }

@@ -82,7 +82,7 @@ public class DungeonRoom  {
     private RoomState currentState = RoomState.DISCOVERED;
 
     @Getter(AccessLevel.NONE)
-    private Map<String, DungeonMechanicState> _mechanics = null;
+    private ConcurrentHashMap<String, DungeonMechanicState> _mechanics = null;
 
     @Setter
     private World cachedWorld;
@@ -204,7 +204,7 @@ public class DungeonRoom  {
     public Map<String, DungeonMechanicState> getMechanics() {
         if (dungeonRoomInfo == null) return Collections.EMPTY_MAP;
         if (_mechanics == null || EditingContext.getEditingContext() != null) {
-            _mechanics = new HashMap<>();
+            _mechanics = new ConcurrentHashMap<>();
             for (Map.Entry<String, DungeonMechanicData> stringDungeonMechanicDataEntry : dungeonRoomInfo.getMechanics().entrySet()) {
                 _mechanics.put(stringDungeonMechanicDataEntry.getKey(), stringDungeonMechanicDataEntry.getValue().createState(this));
             }

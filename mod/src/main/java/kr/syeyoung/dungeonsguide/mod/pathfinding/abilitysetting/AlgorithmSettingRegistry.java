@@ -16,6 +16,15 @@ public class AlgorithmSettingRegistry {
         ALGORITHM_SETTINGS.add(algorithmSetting);
     }
 
+    public static void unregisterAlgorithmSetting(AlgorithmSetting algorithmSetting) {
+        if (algorithmSetting == null) return;
+
+        // Never remove the default
+        if (algorithmSetting == STANDARD_DEFAULT_ALGORITHM_SETTING) return;
+
+        ALGORITHM_SETTINGS.remove(algorithmSetting);
+    }
+
     public static Set<AlgorithmSetting> getAlgorithmSettings() {
         return ALGORITHM_SETTINGS;
     }

@@ -102,8 +102,14 @@ public class GeneralRoomProcessor implements RoomProcessor {
 
     @Override
     public void tick() {
-        for (DungeonMechanicState value : dungeonRoom.getMechanics().values()) {
-            if (value instanceof ISecret) ((ISecret) value).tick(dungeonRoom);
+        // Copy the keys first to prevent concurrent modification
+        Set<String> keys = new HashSet<>(dungeonRoom.getMechanics().keySet());
+
+        for (String key : keys) {
+            DungeonMechanicState value = dungeonRoom.getMechanics().get(key);
+            if (value instanceof ISecret) {
+                ((ISecret) value).tick(dungeonRoom);
+            }
         }
     }
 

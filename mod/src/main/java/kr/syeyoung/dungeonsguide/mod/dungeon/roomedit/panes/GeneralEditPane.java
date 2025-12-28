@@ -36,6 +36,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentText;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraft.nbt.CompressedStreamTools;
 
 import java.awt.*;
 import java.io.*;
@@ -148,85 +149,25 @@ public class GeneralEditPane extends MPanel {
             schematic = new MButton();
             schematic.setText("Save Schematic");
             schematic.setOnActionPerformed(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        NBTTagCompound nbtTagCompound2 = createNBT();
+    @Override
+    public void run() {
+        try {
+            NBTTagCompound nbt = createNBT();
 
-                        File f=new File(Main.getConfigDir(), "schematics/"+
-                                dungeonRoom.getDungeonRoomInfo().getName()+"-"+dungeonRoom.getDungeonRoomInfo().getUuid().toString()+"-"+ UUID.randomUUID()+".schematic");
+            File f = new File(Main.getConfigDir(), "schematics/" +
+                    dungeonRoom.getDungeonRoomInfo().getName() + "-" +
+                    dungeonRoom.getDungeonRoomInfo().getUuid() + "-" +
+                    UUID.randomUUID() + ".schematic");
 
-                        Method method = ReflectionHelper.findMethod(NBTTagCompound.class, nbtTagCompound2, new String[] {"write", "method_5062", "a"}, DataOutput.class);
+            // Use the public API to write compressed NBT
+            CompressedStreamTools.writeCompressed(nbt, new FileOutputStream(f));
 
-                        FileOutputStream fos = new FileOutputStream(f);
-                        DataOutputStream dataoutputstream = new DataOutputStream(new BufferedOutputStream(new GZIPOutputStream(fos)));
-
-                        try
-                        {
-                            dataoutputstream.writeByte(nbtTagCompound2.getId());
-
-                            dataoutputstream.writeUTF("Schematic");
-                            method.invoke(nbtTagCompound2, dataoutputstream);
-                        }
-                        finally
-                        {
-                            dataoutputstream.close();
-                        }
-
-//                        NBTTagCompound compound = nbtTagCompound2;
-//                        int w = compound.getShort("Width");
-//                        int l = compound.getShort("Length");
-//                        if (dungeonRoom.getRoomMatcher().getRotation() % 2 == 1) {
-//                            int temp = l;
-//                            l = w;
-//                            w = temp;
-//                        }
-////                        if (!dungeonRoom.getDungeonRoomInfo().hasSchematic())
-//                        dungeonRoom.getDungeonRoomInfo().setSize(w,l,256);
-//
-//                        byte[] blocks = compound.getByteArray("Blocks");
-//                        byte[] meta = compound.getByteArray("Data");
-//                        BlockPos.MutableBlockPos mpos = new BlockPos.MutableBlockPos();
-//                        OffsetPoint offsetPoint = new OffsetPoint();
-//                        for (int x = 1; x < compound.getShort("Width"); x++) {
-//                            for (int y = 0; y < compound.getShort("Height"); y++) {
-//                                for (int z = 1; z < compound.getShort("Length"); z++) {
-//                                    int index = x + (y * compound.getShort("Length") + z) * compound.getShort("Width");
-//                                    mpos.set(x+dungeonRoom.getRoomBounds().getMinX(),y,z+dungeonRoom.getRoomBounds().getMinZ());
-//                                    offsetPoint.setPosInWorld(dungeonRoom, mpos);
-//
-//                                    Block b = Block.getBlockById(blocks[index] & 0xFF);
-//                                    Optional<PropertyDirection> propertyDirection = b.getDefaultState().getPropertyNames().stream()
-//                                            .filter(a -> a instanceof PropertyDirection)
-//                                            .map(PropertyDirection.class::cast).findFirst();
-//
-//                                    if (!dungeonRoom.getRoomBounds().canAccessRelative(x,z)) {
-//                                        continue;
-//                                    }
-//
-//
-//                                    IBlockState blockState = b.getStateFromMeta(meta[index] & 0xFF);
-//                                    if (propertyDirection.isPresent()) {
-//                                        EnumFacing enumFacing = blockState.getValue(propertyDirection.get());
-//                                        if (!(enumFacing == EnumFacing.UP || enumFacing == EnumFacing.DOWN)) {
-//                                            for (int i = 0; i < dungeonRoom.getRoomMatcher().getRotation(); i++)
-//                                                enumFacing = enumFacing.rotateY();
-//                                            blockState = blockState.withProperty(propertyDirection.get(), enumFacing);
-//                                        }
-//                                    }
-//
-//                                    dungeonRoom.getDungeonRoomInfo().setBlock(offsetPoint, blockState);
-//                                }
-//                            }
-//                        }
-
-                        ChatTransmitter.addToQueue(new ChatComponentText("§eDungeons Guide §7:: §fSaved to "+f.getName()));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            });
+            ChatTransmitter.addToQueue(new ChatComponentText("§eDungeons Guide §7:: §fSaved to " + f.getName()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+});
             schematic.setBackgroundColor(Color.orange);
             schematic.setBounds(new Rectangle(0,180,getBounds().width, 20));
             add(schematic);

@@ -9,6 +9,7 @@ import java.io.IOException;
 @Getter
 @Data
 @With
+@EqualsAndHashCode
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class AlgorithmSetting implements Cloneable {
     
