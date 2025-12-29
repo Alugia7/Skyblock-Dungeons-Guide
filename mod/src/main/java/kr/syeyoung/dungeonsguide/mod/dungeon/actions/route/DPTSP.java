@@ -127,17 +127,20 @@ public class DPTSP {
         List<ActionDAGNode> dagNodeList = new ArrayList<>();
         int[] nodeStatus = dag.getNodeStatusAll();
 
+        List<ActionDAGNode> allNodes = dag.getAllNodes();
 
-        requireIdBitMapping = new int[dag.getAllNodes().size()];
-        orIdIdxMapping = new int[dag.getAllNodes().size()];
-        nodeType = new int[dag.getAllNodes().size()];
-        require = new long[dag.getAllNodes().size()];
-        or = new int[dag.getAllNodes().size()][];
-        sanity = new boolean[dag.getAllNodes().size()];
+        int nodeCount = allNodes.size();
+        requireIdBitMapping = new int[nodeCount];
+        orIdIdxMapping = new int[nodeCount];
+        nodeType = new int[nodeCount];
+        require = new long[nodeCount];
+        or = new int[nodeCount][];
+        sanity = new boolean[nodeCount];
 
+        
 
-        label: for (int i = 0; i < dag.getAllNodes().size(); i++) {
-            ActionDAGNode node = dag.getAllNodes().get(i);
+        label: for (int i = 0; i < allNodes.size(); i++) {
+            ActionDAGNode node = allNodes.get(i);
             for (ActionDAGNode actionDAGNode : node.getRequiredBy()) {
                 if (actionDAGNode.getOr().isEmpty()) continue;
                 continue label;
@@ -147,12 +150,13 @@ public class DPTSP {
             requireIdBitMapping[node.getId()] = dagNodeList.size();
             dagNodeList.add(node);
         }
+
         bitNodes = dagNodeList.toArray(new ActionDAGNode[0]);
         requireBitSize = bitNodes.length;
 
         long mult = 1;
         List<ActionDAGNode[]> orNodes = new ArrayList<>();
-        for (ActionDAGNode allNode : dag.getAllNodes()) {
+        for (ActionDAGNode allNode : allNodes) {
             if (allNode.getOr().isEmpty()) continue;
             ActionDAGNode[] ornode = new ActionDAGNode[allNode.getOr().size()+1];
             for (int i = 0; i < allNode.getOr().size(); i++) {
@@ -170,21 +174,20 @@ public class DPTSP {
         mechanicNames = dungeonRoom.getMechanics().entrySet().stream().filter(a -> a.getValue() instanceof DungeonDoorState || a.getValue() instanceof DungeonOnewayDoorState)
                 .map(a -> a.getKey()).collect(Collectors.toList());
 
-        int bitset = 0;
+        stBitset = 0;
         for (int i = 0; i < mechanicNames.size(); i++) {
             String mechanicName = mechanicNames.get(i);
             if (!((WorldMutatingMechanicState)dungeonRoom.getMechanics().get(mechanicName)).isBlocking(dungeonRoom)) {
-                bitset |= 1 << i;
+                stBitset |= 1 << i;
             }
         }
-        stBitset = bitset;
 
         for (int i = 0; i < nodeStatus.length; i++) {
             if (nodeStatus[i] == 1 || nodeStatus[i] == 2)
                 nodeType[i] = 0;
         }
 
-        everyNode = dag.getAllNodes().toArray(new ActionDAGNode[0]);
+        everyNode = allNodes.toArray(new ActionDAGNode[0]);
         for (int i = 0; i < everyNode.length; i++) {
             require[i] = 0;
             for (int j = 0; j < everyNode[i].getRequire().size(); j++) {

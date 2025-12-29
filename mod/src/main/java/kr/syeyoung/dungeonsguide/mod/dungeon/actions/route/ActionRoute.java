@@ -105,7 +105,7 @@ public class ActionRoute {
                 nodes.add(new ActionComplete());
                 actions = nodes;
                 current = 0;
-                ChatTransmitter.sendDebugChat("Pathfinding took " + (System.currentTimeMillis() - startttt) + "ms");
+                ChatTransmitter.sendDebugChat("Pathfinding took " + (System.currentTimeMillis() - startttt) + "ms (DPTSP)");
                 calculating = false;
             } catch (Throwable t) {
                 t.printStackTrace();
