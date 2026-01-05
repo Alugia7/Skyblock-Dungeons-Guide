@@ -17,6 +17,7 @@ import lombok.EqualsAndHashCode;
 import net.minecraft.util.LongHashMap;
 import net.minecraft.util.Vec3;
 import org.jetbrains.annotations.NotNull;
+import java.util.concurrent.locks.LockSupport;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -92,9 +93,17 @@ public class DPTSP {
 
         if (nativeLoaded) {
             try {
+                TimeCache.ensureStarted();
+                final long deadline = TimeCache.now + 10000;
                 long handle = startCoroutine();
                 try {
                     while (true) {
+                        if (TimeCache.now > deadline) {
+                            ChatTransmitter.addToQueue("§fSolver took too long (10s) YIKES!!!");
+                            ChatTransmitter.addToQueue("Room: " + dungeonRoom.getDungeonRoomInfo().getName());
+                            ChatTransmitter.addToQueue("Roomsate is :" + roomState);
+                            break;
+                        }
                         roomState.setPlayerPos(new Vec3(getX(handle), getY(handle), getZ(handle)));
                         roomState.setOpenMechanicsBitset(getMech(handle));
                         double cost = everyNode[getNode(handle)].getAction().evalulateCost(roomState, dungeonRoom, cache, pathPlanner);
@@ -231,4 +240,34 @@ public class DPTSP {
 
 
 
+}
+
+class TimeCache {
+    static volatile long now;
+    private static volatile boolean started = false;
+
+    static {
+        start();
+    }
+
+    static void ensureStarted() {
+        // no-op, forces class initialization
+    }
+
+    private static synchronized void start() {
+        if (started) return;
+        started = true;
+
+        now = System.currentTimeMillis();
+        Thread t = new Thread(() -> {
+            while (true) {
+                now = System.currentTimeMillis();
+                LockSupport.parkNanos(50_000_000);
+            }
+        }, "TimeCache");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private TimeCache() {}
 }
